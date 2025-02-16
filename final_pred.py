@@ -10,7 +10,14 @@ from keras.models import load_model
 from cvzone.HandTrackingModule import HandDetector
 from string import ascii_uppercase
 import enchant
-ddd=enchant.Dict("en-US")
+print(enchant.list_languages())
+# ddd=enchant.Dict("en-US")
+# import enchant
+# enchant.set_param("enchant.default.backend", "aspell")
+
+
+
+
 hd = HandDetector(maxHands=1)
 hd2 = HandDetector(maxHands=1)
 import tkinter as tk
@@ -27,7 +34,7 @@ os.environ["THEANO_FLAGS"] = "device=cuda, assert_no_cpu_op=True"
 class Application:
 
     def __init__(self):
-        self.vs = cv2.VideoCapture(0)
+        self.vs = cv2.VideoCapture("https://192.168.1.92:8080/video")
         self.current_image = None
         self.model = load_model('cnn8grps_rad1_model.h5')
         self.speak_engine=pyttsx3.init()
