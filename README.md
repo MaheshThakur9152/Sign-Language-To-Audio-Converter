@@ -1,4 +1,6 @@
-# SIGNOVA: American Sign Language (ASL) Recognition
+# SIGNOVA: American Sign Language (ASL) Recognition 
+
+![SIGNOVA Banner](signova_final_banner.png)
 
 ## Introduction
 SIGNOVA is a software application that utilizes a Convolutional Neural Network (CNN) to recognize American Sign Language (ASL) hand gestures from images. The recognized gestures are displayed as text, allowing for effective communication between sign language users and non-sign language users. The software is particularly beneficial for individuals with hearing or speech impairments, helping to bridge the communication gap.
@@ -15,8 +17,8 @@ SIGNOVA is a software application that utilizes a Convolutional Neural Network (
 1. **User Input:** The user makes a sign language gesture in front of a webcam.
 2. **Image Acquisition:** The system captures an image of the gesture.
 3. **Preprocessing:**
-   - Hand is detected using MediaPipe library.
-   - Region of interest (ROI) is extracted.
+   - Hand is detected using the MediaPipe library.
+   - Region of Interest (ROI) is extracted.
    - Image is converted to grayscale and binarized using OpenCV.
 4. **Feature Extraction:**
    - Hand landmarks are extracted and analyzed.
@@ -55,12 +57,3 @@ SIGNOVA is a software application that utilizes a Convolutional Neural Network (
 1. Install dependencies:
    ```bash
    pip install opencv-python mediapipe tensorflow keras numpy
-   ```
-2. Run the application:
-   ```bash
-   python signova.py
-   ```
-
-## Conclusion
-SIGNOVA successfully recognizes ASL gestures with high accuracy, improving communication accessibility. Future enhancements aim to expand its capabilities to mobile platforms for wider usability.
-
