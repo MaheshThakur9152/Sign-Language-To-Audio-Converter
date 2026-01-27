@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign Language Converter</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f0f0f0; }
+        video { border: 2px solid #333; border-radius: 8px; width: 640px; height: 480px; }
+        #result { font-size: 48px; font-weight: bold; color: #007bff; margin: 20px; }
+        button { padding: 10px 20px; font-size: 18px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 5px;}
+    </style>
+</head>
+<body>
+    <h1>Sign Language to Audio API</h1>
+    <video id="video" autoplay></video>
+    <div id="result">Waiting...</div>
+    <button onclick="startPrediction()">Start Prediction</button>
+
+    <script>
+        const video = document.getElementById('video');
+        const resultDiv = document.getElementById('result');
+
+        // Access Webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => { video.srcObject = stream; });
+
+        async function sendFrame() {
+            // 1. Capture Frame from Video
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            // 2. Convert to Blob
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append("file", blob, "frame.jpg");
+
+                // 3. Send to API (Assume localhost:8000)
+                try {
+                    const response = await fetch("http://localhost:8000/predict", {
+                        method: "POST",
+                        body: formData
+                    });
+                    const data = await response.json();
+                    
+                    // 4. Update UI
+                    if (data.prediction && data.prediction !== "No Hand Detected") {
+                        resultDiv.innerText = data.prediction;
+                        
+                        // Play Audio if new letter detected
+                        if (data.audio) {
+                            const audio = new Audio("data:audio/mp3;base64," + data.audio);
+                            audio.play();
+                        }
+                    }
+                } catch (e) {
+                    console.error("API Error:", e);
+                }
+            }, 'image/jpeg');
+        }
+
+        function startPrediction() {
+            // Send a frame every 1 second (1000ms)
+            setInterval(sendFrame, 1000);
+        }
+    </script>
+</body>
+</html>
