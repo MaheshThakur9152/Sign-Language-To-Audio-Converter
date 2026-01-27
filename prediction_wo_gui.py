@@ -33,6 +33,43 @@ dicttt=dict()
 count=0
 kok=[]
 
+# Precomputed condition sets for faster membership checks
+L1 = {(6,0),(6,6),(6,2)}
+L2 = {(1,4),(1,5),(1,6),(1,3),(1,0)}
+L3 = {(5,3),(5,0),(5,7),(5,4),(5,2),(5,1),(5,5)}
+L4 = {(6,4),(6,1),(6,2)}
+L5 = {(1,4),(1,6),(1,1)}
+L6 = {(3,6),(3,4)}
+L7 = {(2,2),(2,5),(2,4)}
+L8 = {(3,6),(3,5),(3,4)}
+L9 = {(3,2),(3,1),(3,6)}
+L10 = {(4,4),(4,5),(4,2),(7,5),(7,6),(7,0)}
+L11 = {(0,2),(0,6),(0,1),(0,5),(0,0),(0,7),(0,4),(0,3),(2,7)}
+L12 = {(5,7),(5,2),(5,6)}
+L13 = {(4,6),(4,2),(4,4),(4,1),(4,5),(4,7)}
+L14 = {(6,7),(0,7),(0,1),(0,0),(6,4),(6,6),(6,5),(6,1)}
+L15 = {(0,4),(0,2),(0,3),(0,1),(0,6)}
+L16 = {(7,2)}
+L17 = {(2,1),(2,2),(2,6),(2,7),(2,0)}
+L18 = {(4,6),(4,2),(4,1),(4,4)}
+L19 = {(1,4),(1,6),(1,0),(1,2)}
+L20 = {(5,0),(5,1),(5,4),(5,5),(5,6),(6,1),(7,6),(0,2),(7,1),(7,4),(6,6),(7,2),(6,3),(6,4),(7,5)}
+L21 = {(6,1),(6,0),(0,3),(6,4),(2,2),(0,6),(6,2),(7,6),(4,6),(4,1),(4,2),(0,2),(7,1),(7,4),(6,6),(7,2),(7,5)}
+L22 = {(6,1),(6,0),(4,2),(4,1),(4,6),(4,4)}
+L23 = {(5,0),(3,4),(3,0),(3,1),(3,5),(5,5),(5,4),(5,1),(7,6)}
+L24 = {(3,4),(3,0),(3,1),(3,5),(3,6)}
+L25 = {(6,6),(6,4),(6,1),(6,2)}
+L26 = {(5,4),(5,5),(5,1),(0,3),(0,7),(5,0),(0,2),(6,2),(7,5),(7,1),(7,6),(7,7)}
+L27 = {(1,5),(1,7),(1,1),(1,6),(1,3),(1,0)}
+L28 = {(5,5),(5,0),(5,4),(5,1),(4,6),(4,1),(7,6),(3,0),(3,5)}
+L29 = {(3,5),(3,0),(3,6),(5,1),(4,1),(2,0),(5,0),(5,5)}
+L30 = {(5,0),(5,5),(0,1)}
+# Additional sets (earlier groups)
+L31 = {(5,2),(5,3),(3,5),(3,6),(3,0),(3,2),(6,4),(6,1),(6,2),(6,6),(6,7),(6,0),(6,5),(4,1),(1,0),(1,1),(6,3),(1,6),(5,6),(5,1),(4,5),(1,4),(1,5),(2,0),(2,6),(4,6),(1,0),(5,7),(1,6),(6,1),(7,6),(2,5),(7,1),(5,4),(7,0),(7,5),(7,2)}
+L32 = {(2,2),(2,1)}
+L33 = {(0,0),(0,6),(0,2),(0,5),(0,1),(0,7),(5,2),(7,6),(7,1)}
+L34 = {(4,6),(4,1),(4,5),(4,3),(4,7)}
+
 while True:
     try:
         _, frame = capture.read()
@@ -100,15 +137,14 @@ while True:
                 pl = [ch1, ch2]
 
                 #condition for [Aemnst]
-                l=[[5,2],[5,3],[3,5],[3,6],[3,0],[3,2],[6,4],[6,1],[6,2],[6,6],[6,7],[6,0],[6,5],[4,1],[1,0],[1,1],[6,3],[1,6],[5,6],[5,1],[4,5],[1,4],[1,5],[2,0],[2,6],[4,6],[1,0],[5,7],[1,6],[6,1],[7,6],[2,5],[7,1],[5,4],[7,0],[7,5],[7,2]]
-                if pl in l:
+                if pl in L31:
                     if (pts[6][1] < pts[8][1] and pts[10][1] < pts[12][1] and pts[14][1] < pts[16][1] and pts[18][1] <pts[20][1]):
                         ch1=0
                         #print("00000")
 
                 #condition for [o][s]
-                l=[[2,2],[2,1]]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L32:
                     if (pts[5][0] < pts[4][0] ):
                         ch1=0
                         print("++++++++++++++++++")
@@ -117,17 +153,15 @@ while True:
 
 
                 #condition for [c0][aemnst]
-                l=[[0,0],[0,6],[0,2],[0,5],[0,1],[0,7],[5,2],[7,6],[7,1]]
-                pl=[ch1,ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L33:
                     if (pts[0][0]>pts[8][0] and pts[0][0]>pts[4][0] and pts[0][0]>pts[12][0] and pts[0][0]>pts[16][0] and pts[0][0]>pts[20][0]) and pts[5][0] > pts[4][0]:
                         ch1=2
                         #print("22222")
 
                 # condition for [c0][aemnst]
-                l = [[6,0],[6,6],[6,2]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L1:
                     if distance(pts[8],pts[16])<52:
                         ch1 = 2
                         #print("22222")
@@ -135,75 +169,65 @@ while True:
 
                 ##print(pts[2][1]+15>pts[16][1])
                 # condition for [gh][bdfikruvw]
-                l = [[1,4],[1,5],[1,6],[1,3],[1,0]]
-                pl = [ch1, ch2]
-
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L2:
                     if pts[6][1] > pts[8][1] and pts[14][1] < pts[16][1] and pts[18][1]<pts[20][1] and pts[0][0]<pts[8][0] and pts[0][0]<pts[12][0] and pts[0][0]<pts[16][0] and pts[0][0]<pts[20][0]:
                         ch1 = 3
                         print("33333c")
 
 
                 #con for [gh][l]
-                l=[[4,6],[4,1],[4,5],[4,3],[4,7]]
-                pl=[ch1,ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L34:
                     if pts[4][0]>pts[0][0]:
                         ch1=3
                         print("33333b")
 
                 # con for [gh][pqz]
-                l = [[5, 3],[5,0],[5,7], [5, 4], [5, 2],[5,1],[5,5]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L3:
                     if pts[2][1]+15<pts[16][1]:
                         ch1 = 3
                         print("33333a")
 
                 # con for [l][x]
-                l = [[6, 4], [6, 1], [6, 2]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L4:
                     if distance(pts[4],pts[11])>55:
                         ch1 = 4
                         #print("44444")
 
                 # con for [l][d]
-                l = [[1, 4], [1, 6],[1,1]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L5:
                     if (distance(pts[4], pts[11]) > 50) and (pts[6][1] > pts[8][1] and pts[10][1] < pts[12][1] and pts[14][1] < pts[16][1] and pts[18][1] <pts[20][1]):
                         ch1 = 4
                         #print("44444")
 
                 # con for [l][gh]
-                l = [[3, 6], [3, 4]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L6:
                     if (pts[4][0]<pts[0][0]):
                         ch1 = 4
                         #print("44444")
 
                 # con for [l][c0]
-                l = [[2, 2], [2, 5],[2,4]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L7:
                     if (pts[1][0] < pts[12][0]):
                         ch1 = 4
                         #print("44444")
 
                 # con for [l][c0]
-                l = [[2, 2], [2, 5], [2, 4]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L7:
                     if (pts[1][0] < pts[12][0]):
                         ch1 = 4
                         #print("44444")
 
                 # con for [gh][z]
-                l = [[3, 6],[3,5],[3,4]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L8:
                     if (pts[6][1] > pts[8][1] and pts[10][1] < pts[12][1] and pts[14][1] < pts[16][1] and pts[18][1] <pts[20][1]) and pts[4][1]>pts[10][1]:
                         ch1 = 5
                         print("55555b")
@@ -211,25 +235,22 @@ while True:
 
 
                 # con for [gh][pq]
-                l = [[3,2],[3,1],[3,6]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L9:
                     if pts[4][1]+17>pts[8][1] and pts[4][1]+17>pts[12][1] and pts[4][1]+17>pts[16][1] and pts[4][1]+17>pts[20][1]:
                         ch1 = 5
                         print("55555a")
 
                 # con for [l][pqz]
-                l = [[4,4],[4,5],[4,2],[7,5],[7,6],[7,0]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L10:
                     if pts[4][0]>pts[0][0]:
                         ch1 = 5
                         #print("55555")
 
                 # con for [pqz][aemnst]
-                l = [[0, 2],[0,6],[0,1],[0,5],[0,0],[0,7],[0,4],[0,3],[2,7]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L11:
                     if pts[0][0]<pts[8][0]  and  pts[0][0]<pts[12][0]  and pts[0][0]<pts[16][0]  and pts[0][0]<pts[20][0]:
                         ch1 = 5
                         #print("55555")
@@ -237,93 +258,82 @@ while True:
 
 
                 # con for [pqz][yj]
-                l = [[5, 7],[5,2],[5,6]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L12:
                     if pts[3][0]<pts[0][0]:
                         ch1 = 7
                         #print("77777")
 
                 # con for [l][yj]
-                l = [[4, 6],[4,2],[4,4],[4,1],[4,5],[4,7]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L13:
                     if pts[6][1] < pts[8][1]:
                         ch1 = 7
                         #print("77777")
 
                 # con for [x][yj]
-                l = [[6, 7],[0,7],[0,1],[0,0],[6,4],[6,6] ,[6,5],[6,1]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L14:
                     if pts[18][1] > pts[20][1]:
                         ch1 = 7
                         #print("77777")
 
 
                 # condition for [x][aemnst]
-                l = [[0,4],[0,2],[0,3],[0,1],[0,6]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L15:
                     if pts[5][0]>pts[16][0]:
                         ch1 = 6
                         #print("66666")
 
                 # condition for [yj][x]
-                l = [[7, 2]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L16:
                     if pts[18][1] < pts[20][1]:
                         ch1 = 6
                         #print("66666")
 
 
                 # condition for [c0][x]
-                l = [[2, 1],[2,2],[2,6],[2,7],[2,0]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L17:
                     if distance(pts[8],pts[16])>50:
                         ch1 = 6
                         #print("66666")
 
                 # con for [l][x]
 
-                l = [[4, 6],[4,2],[4,1],[4,4]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L18:
                     if distance(pts[4], pts[11]) < 60:
                         ch1 = 6
                         #print("66666")
 
                 #con for [x][d]
-                l = [[1,4],[1,6],[1,0],[1,2]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L19:
                     if pts[5][0] - pts[4][0] - 15 > 0:
                         ch1 = 6
 
 
                 # con for [b][pqz]
-                l = [[5,0],[5,1],[5,4],[5,5],[5,6],[6,1],[7,6],[0,2],[7,1],[7,4],[6,6],[7,2],[5,0],[6,3],[6,4],[7,5],[7,2]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L20:
                     if (pts[6][1] > pts[8][1] and pts[10][1] > pts[12][1] and pts[14][1] > pts[16][1] and pts[18][1] > pts[20][1]):
                         ch1 = 1
                         print("111111")
 
 
                 # con for [f][pqz]
-                l = [[6, 1],[6,0],[0,3],[6,4],[2,2], [0,6],[6,2],[7, 6],[4,6],[4,1],[4,2], [0, 2], [7, 1], [7, 4], [6, 6], [7, 2], [7, 5], [7, 2]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L21:
                     if (pts[6][1] < pts[8][1] and pts[10][1] > pts[12][1] and pts[14][1] > pts[16][1] and
                                     pts[18][1] > pts[20][1]):
                         ch1 = 1
                         print("111112")
 
-                l = [[6, 1], [6, 0],[4,2],[4,1],[4,6],[4,4]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L22:
                     if (pts[10][1] > pts[12][1] and pts[14][1] > pts[16][1] and
                             pts[18][1] > pts[20][1]):
                         ch1 = 1
@@ -332,34 +342,30 @@ while True:
                 # con for [d][pqz]
                 fg=19
                 #print("_________________ch1=",ch1," ch2=",ch2)
-                l = [[5,0],[3,4],[3,0],[3,1],[3,5],[5,5],[5,4],[5,1],[7,6]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L23:
                     if ((pts[6][1] > pts[8][1] and pts[10][1] < pts[12][1] and pts[14][1] < pts[16][1] and
                                     pts[18][1] < pts[20][1]) and (pts[2][0]<pts[0][0]) and pts[4][1]>pts[14][1]):
                         ch1 = 1
                         print("111113")
 
-                l = [ [4, 1], [4, 2],[4, 4]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L22:
                     if (distance(pts[4], pts[11]) < 50) and (pts[6][1] > pts[8][1] and pts[10][1] < pts[12][1] and pts[14][1] < pts[16][1] and pts[18][1] < pts[20][1]):
                         ch1 = 1
                         print("1111993")
 
 
 
-                l = [[3, 4], [3, 0], [3, 1], [3, 5],[3,6]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L24:
                     if ((pts[6][1] > pts[8][1] and pts[10][1] < pts[12][1] and pts[14][1] < pts[16][1] and
                          pts[18][1] < pts[20][1]) and (pts[2][0] < pts[0][0]) and pts[14][1]<pts[4][1]):
                         ch1 = 1
                         print("1111mmm3")
 
-                l = [[6, 6],[6, 4], [6, 1],[6,2]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L25:
                     if pts[5][0]-pts[4][0]-15<0:
                         ch1 = 1
                         print("1111140")
@@ -367,27 +373,24 @@ while True:
 
 
                 # con for [i][pqz]
-                l = [[5,4],[5,5],[5,1],[0,3],[0,7],[5,0],[0,2],[6,2],[7, 5], [7, 1], [7, 6], [7, 7]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L26:
                     if ((pts[6][1] < pts[8][1] and pts[10][1] < pts[12][1] and pts[14][1] < pts[16][1] and
                                  pts[18][1] > pts[20][1])):
                         ch1 = 1
                         print("111114")
 
                 # con for [yj][bfdi]
-                l = [[1,5],[1,7],[1,1],[1,6],[1,3],[1,0]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L27:
                     if (pts[4][0]<pts[5][0]+15) and ((pts[6][1] < pts[8][1] and pts[10][1] < pts[12][1] and pts[14][1] < pts[16][1] and
                                  pts[18][1] > pts[20][1])):
                         ch1 = 7
                         print("111114lll;;p")
 
                 #con for [uvr]
-                l = [[5,5],[5,0],[5,4],[5,1],[4,6],[4,1],[7,6],[3,0],[3,5]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L28:
                     if ((pts[6][1] > pts[8][1] and pts[10][1] > pts[12][1] and pts[14][1] < pts[16][1] and
                          pts[18][1] < pts[20][1])) and pts[4][1]>pts[14][1]:
                         ch1 = 1
@@ -397,18 +400,16 @@ while True:
 
                 # con for [w]
                 fg=13
-                l = [[3,5],[3,0],[3,6],[5,1],[4,1],[2,0],[5,0],[5,5]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L29:
                     if not(pts[0][0]+fg < pts[8][0] and pts[0][0]+fg < pts[12][0] and pts[0][0]+fg < pts[16][0]  and pts[0][0]+fg < pts[20][0]) and not(pts[0][0] > pts[8][0] and pts[0][0] > pts[12][0] and pts[0][0] > pts[16][0]  and pts[0][0] > pts[20][0]) and distance(pts[4], pts[11]) < 50:
                         ch1 = 1
                         print("111116")
 
                 # con for [w]
 
-                l = [ [5, 0], [5, 5],[0,1]]
-                pl = [ch1, ch2]
-                if pl in l:
+                pl = (ch1,ch2)
+                if pl in L30:
                     if pts[6][1]>pts[8][1] and pts[10][1]>pts[12][1] and pts[14][1]>pts[16][1]:
                         ch1 = 1
                         print("1117")
