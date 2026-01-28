@@ -37,7 +37,7 @@
         .main-container {
             flex: 1;
             display: flex;
-            align-items: center;
+            align-items: flex-start; /* Changed from center to accommodate taller height */
             padding: 2rem 0;
         }
 
@@ -55,7 +55,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* Mirror the video */
+            transform: scaleX(-1);
         }
 
         .recording-indicator {
@@ -96,90 +96,107 @@
         .result-panel {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 20px;
-            padding: 2rem;
+            padding: 1.5rem;
             height: 100%;
             border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            text-align: center;
+            gap: 1.5rem;
         }
 
-        .prediction-display {
-            margin: auto 0;
+        .prediction-section {
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            padding: 1rem;
         }
 
         .prediction-label {
-            font-size: 1.2rem;
+            font-size: 0.9rem;
             color: #aaa;
-            margin-bottom: 1rem;
             text-transform: uppercase;
             letter-spacing: 2px;
+            margin-bottom: 0.5rem;
         }
 
         #result {
-            font-size: 6rem;
+            font-size: 4rem;
             font-weight: 700;
             background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(79, 172, 254, 0.3);
-            min-height: 140px; 
+            text-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
+            min-height: 80px; 
             line-height: normal;
         }
 
-        .controls {
-            width: 100%;
+        .sentence-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sentence-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 80px;
+            font-size: 1.2rem;
+            font-family: monospace;
+            color: #eee;
+            border: 1px solid rgba(255,255,255,0.1);
+            word-wrap: break-word;
+        }
+
+        .controls-grid {
             display: grid;
-            gap: 1rem;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+        }
+        
+        .full-width {
+            grid-column: span 2;
         }
 
         .btn-custom {
-            padding: 15px;
-            border-radius: 12px;
+            padding: 12px;
+            border-radius: 10px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            transition: all 0.3s ease;
+            font-size: 0.9rem;
             border: none;
-            width: 100%;
-        }
-        
-        .btn-custom:disabled {
-            background: #444;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
+            transition: all 0.2s;
         }
 
         .btn-start {
             background: linear-gradient(45deg, #11998e, #38ef7d);
             color: white;
         }
-
-        .btn-start:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(56, 239, 125, 0.4);
-            color: white;
-        }
-
         .btn-stop {
             background: linear-gradient(45deg, #cb2d3e, #ef473a);
             color: white;
             opacity: 0.5;
             pointer-events: none;
         }
+        .btn-stop.active { opacity: 1; pointer-events: all; }
 
-        .btn-stop.active {
-            opacity: 1;
-            pointer-events: all;
+        .btn-action {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .btn-action:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
         }
 
-        .btn-stop:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(239, 71, 58, 0.4);
+        .btn-speak {
+            background: linear-gradient(45deg, #FF512F, #DD2476);
             color: white;
+        }
+        .btn-speak:hover {
+             transform: translateY(-2px);
+             box-shadow: 0 4px 15px rgba(221, 36, 118, 0.4);
         }
 
         footer {
@@ -198,8 +215,8 @@
             <a class="navbar-brand" href="#">
                 <i class="fas fa-hands-asl-interpreting me-2"></i> SignToAudio AI
             </a>
-            <span class="navbar-text">
-                Real-time Gesture Recognition
+            <span class="navbar-text d-none d-md-block">
+                Real-time Gesture Recognition & Sentence Formation
             </span>
         </div>
     </nav>
@@ -215,22 +232,53 @@
                         <div class="recording-dot"></div> LIVE
                     </div>
                 </div>
+                <div class="mt-3 text-center text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> Hold a gesture for 1 second to add it to the sentence.
+                </div>
             </div>
 
             <!-- Controls & Result Column -->
             <div class="col-lg-5">
                 <div class="result-panel">
-                    <div class="prediction-display">
-                        <div class="prediction-label">Detected Gesture</div>
+                    <!-- Current Prediction -->
+                    <div class="prediction-section">
+                        <div class="prediction-label">Current Sign</div>
                         <div id="result">--</div>
                     </div>
 
-                    <div class="controls">
+                    <!-- Sentence Building -->
+                    <div class="sentence-section">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="prediction-label m-0">Formed Sentence</span>
+                            <span class="badge bg-secondary" id="char-count">0 chars</span>
+                        </div>
+                        <div class="sentence-box" id="sentence-display"></div>
+                    </div>
+
+                    <!-- Layout Controls -->
+                     <div class="controls-grid">
+                        <button class="btn btn-custom btn-action" onclick="addSpace()">
+                            <i class="fas fa-keyboard me-2"></i> Space
+                        </button>
+                        <button class="btn btn-custom btn-action" onclick="backspace()">
+                            <i class="fas fa-backspace me-2"></i> Delete
+                        </button>
+                        
+                        <button class="btn btn-custom btn-action full-width" onclick="clearSentence()">
+                            <i class="fas fa-trash-alt me-2"></i> Clear Sentence
+                        </button>
+                        
+                        <button class="btn btn-custom btn-speak full-width" onclick="speakSentence()">
+                            <i class="fas fa-volume-up me-2"></i> Speak Sentence
+                        </button>
+
+                        <div class="border-top my-2 pt-2 full-width"></div>
+
                         <button id="startBtn" class="btn btn-custom btn-start" onclick="startPrediction()">
-                            <i class="fas fa-play me-2"></i> Start Detection
+                            <i class="fas fa-play me-2"></i> Start
                         </button>
                         <button id="stopBtn" class="btn btn-custom btn-stop" onclick="stopPrediction()">
-                            <i class="fas fa-stop me-2"></i> Stop Detection
+                            <i class="fas fa-stop me-2"></i> Stop
                         </button>
                     </div>
                 </div>
@@ -245,113 +293,172 @@
     <script>
         const video = document.getElementById('video');
         const resultDiv = document.getElementById('result');
+        const sentenceDiv = document.getElementById('sentence-display');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const recIndicator = document.getElementById('rec-indicator');
+        const charCountBadge = document.getElementById('char-count');
 
         let predictionInterval = null;
         let isPredicting = false;
+        
+        let sentenceBuffer = "";
+        let lastStablePred = "";
+        let currentPredBuffer = "";
+        let stableFrameCount = 0;
+        const STABILITY_THRESHOLD = 5; // Frames to hold before confirming (approx 0.5-1s)
 
-        // Initialize UI State
+        // Init Camera
         startBtn.disabled = true;
-
-        // Access Webcam on Load
         async function initCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
-                
-                // Wait for video to be ready
-                video.onloadedmetadata = () => {
-                    startBtn.disabled = false;
-                };
+                video.onloadedmetadata = () => { startBtn.disabled = false; };
             } catch (err) {
-                console.error("Camera access denied:", err);
+                console.error(err);
                 resultDiv.innerText = "Cam Error";
                 resultDiv.style.fontSize = "2rem";
-                startBtn.disabled = true;
             }
         }
         initCamera();
 
+        // Main Loop
         async function sendFrame() {
             if (!isPredicting) return;
-            if (video.videoWidth === 0 || video.videoHeight === 0) return;
+            if (video.videoWidth === 0) return;
 
-            // 1. Capture Frame from Video
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
+            canvas.getContext('2d').drawImage(video, 0, 0);
             
-            // 2. Convert to Blob
             canvas.toBlob(async (blob) => {
                 const formData = new FormData();
                 formData.append("file", blob, "frame.jpg");
 
-                // 3. Send to API
                 try {
-                    const response = await fetch("http://localhost:8000/predict", {
-                        method: "POST",
-                        body: formData
-                    });
-                    
-                    if (!response.ok) throw new Error("API Error");
-
+                    // We only want prediction, not audio for every letter (too noisy)
+                    // But API returns audio by default. We can ignore it or play it. 
+                    const response = await fetch("http://localhost:8000/predict", { method: "POST", body: formData });
                     const data = await response.json();
                     
-                    // 4. Update UI
-                    if (data.prediction && data.prediction !== "No Hand Detected") {
-                        resultDiv.innerText = data.prediction;
+                    if (data.prediction && data.prediction !== "No Hand Detected" && data.prediction !== "Adjust Hand" && data.prediction !== "Image Error") {
+                        const pred = data.prediction;
+                        resultDiv.innerText = pred; // Live update
                         
-                        // Play Audio if new letter detected
-                        if (data.audio) {
-                            const audio = new Audio("data:audio/mp3;base64," + data.audio);
-                            audio.play().catch(e => console.log("Audio play error:", e));
+                        // Stability Login
+                        if (pred === currentPredBuffer) {
+                            stableFrameCount++;
+                            if (stableFrameCount === STABILITY_THRESHOLD) {
+                                // Confirmed Gesture
+                                if (pred !== lastStablePred) {
+                                     addToSentence(pred);
+                                     lastStablePred = pred;
+                                     // Optional: Play beep or single letter audio
+                                     if(data.audio) {
+                                         new Audio("data:audio/mp3;base64," + data.audio).play().catch(()=>{});
+                                     }
+                                }
+                            }
+                        } else {
+                            currentPredBuffer = pred;
+                            stableFrameCount = 0;
                         }
-                    } else if (data.prediction === "No Hand Detected") {
-                         // Optional: Handle no hand logic UI
+                    } else {
+                        // Reset if no hand
+                        stableFrameCount = 0;
+                        currentPredBuffer = "";
+                        lastStablePred = ""; // Allow re-typing same letter if hand removed
+                        if (data.prediction) resultDiv.innerText = data.prediction;
                     }
-                } catch (e) {
-                    console.error("API Error or Server Offline:", e);
-                }
-            }, 'image/jpeg', 0.8); // 0.8 quality for speed
+
+                } catch (e) { console.error(e); }
+            }, 'image/jpeg', 0.8);
         }
 
+        // Sentence Logic
+        function addToSentence(char) {
+            sentenceBuffer += char;
+            updateSentenceUI();
+        }
+
+        function addSpace() {
+            sentenceBuffer += " ";
+            updateSentenceUI();
+        }
+
+        function backspace() {
+            sentenceBuffer = sentenceBuffer.slice(0, -1);
+            updateSentenceUI();
+            lastStablePred = ""; // allow re-typing deleted char
+        }
+
+        function clearSentence() {
+            sentenceBuffer = "";
+            updateSentenceUI();
+            lastStablePred = "";
+        }
+
+        function updateSentenceUI() {
+            sentenceDiv.innerText = sentenceBuffer;
+            charCountBadge.innerText = sentenceBuffer.length + " chars";
+            // Auto scroll
+            sentenceDiv.scrollTop = sentenceDiv.scrollHeight;
+        }
+
+        async function speakSentence() {
+            if (!sentenceBuffer.trim()) return;
+            
+            // Visual feedback
+            const btn = document.querySelector('.btn-speak');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Speaking...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch("http://localhost:8000/tts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: sentenceBuffer })
+                });
+                const data = await response.json();
+                if (data.audio) {
+                    const audio = new Audio("data:audio/mp3;base64," + data.audio);
+                    await audio.play();
+                }
+            } catch (e) {
+                console.error("TTS Error:", e);
+                alert("Failed to generate audio");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Controls
         function startPrediction() {
             if (isPredicting) return;
-            
             isPredicting = true;
-            
-            // UI Updates
             startBtn.classList.add('disabled');
             startBtn.style.opacity = '0.5';
-            startBtn.disabled = true; // logic disable
-            
+            startBtn.disabled = true;
             stopBtn.classList.add('active');
             recIndicator.classList.add('active');
             
             resultDiv.innerText = "...";
-
-            // Send a frame every 1 second
-            predictionInterval = setInterval(sendFrame, 1000);
+            predictionInterval = setInterval(sendFrame, 200); // 5 FPS for better responsiveness
         }
 
         function stopPrediction() {
             if (!isPredicting) return;
-
             isPredicting = false;
             clearInterval(predictionInterval);
-
-            // UI Updates
             startBtn.classList.remove('disabled');
             startBtn.style.opacity = '1';
             startBtn.disabled = false;
-            
             stopBtn.classList.remove('active');
             recIndicator.classList.remove('active');
-            
             resultDiv.innerText = "--";
         }
     </script>
