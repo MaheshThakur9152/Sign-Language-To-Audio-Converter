@@ -36,18 +36,56 @@ detector2 = HandDetector(maxHands=1)
 offset = 29
 imgSize = 400
 
+# ==========================================
+# 1. NEW: GLOBAL STATE FOR SENTENCE BUILDING
+# ==========================================
+current_sentence = ""       # The full sentence
+last_prediction = None      # The character seen in the previous frame
+stability_counter = 0       # How many times we've seen the same char
+STABILITY_THRESHOLD = 5     # Frames required to "lock in" a letter
+last_added_char = None      # The last character we actually added to the sentence
+
 def distance(x, y):
     return math.sqrt(((x[0] - y[0]) ** 2) + ((x[1] - y[1]) ** 2))
 
-# --- YOUR LOGIC (Condensed for brevity - PASTE YOUR FULL LOGIC BACK) ---
+# ==========================================
+# 2. HELPER: RESET ENDPOINT
+# ==========================================
+@app.post("/reset")
+def reset_sentence():
+    global current_sentence, last_prediction, stability_counter, last_added_char
+    current_sentence = ""
+    last_prediction = None
+    stability_counter = 0
+    last_added_char = None
+    return {"status": "cleared", "sentence": ""}
+
+@app.post("/backspace")
+def backspace_sentence():
+    global current_sentence
+    current_sentence = current_sentence[:-1]
+    return {"status": "updated", "sentence": current_sentence}
+
+# ==========================================
+# 3. EXISTING LOGIC (Minimally Modified)
+# ==========================================
 def predict_gesture(test_image, pts):
     try:
         if model is None: return "Error"
         
         white = test_image
         white = white.reshape(1, 400, 400, 3)
-        prob = np.array(model.predict(white, verbose=0)[0], dtype='float32')
         
+        # Get raw probabilities
+        prediction = model.predict(white, verbose=0)[0]
+        prob = np.array(prediction, dtype='float32')
+
+        # --- FIX 1: CONFIDENCE THRESHOLD ---
+        # If the highest probability is less than 80%, return nothing
+        if np.max(prob) < 0.8:
+            return ""  # Return empty string to indicate uncertainty
+
+        # Get top 3 predictions for your logic
         ch1 = np.argmax(prob, axis=0)
         prob[ch1] = 0
         ch2 = np.argmax(prob, axis=0)
@@ -393,17 +431,18 @@ def predict_gesture(test_image, pts):
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
+    global current_sentence, last_prediction, stability_counter, last_added_char
+
     try:
         contents = await file.read()
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        if img is None: return {"prediction": "Image Error", "audio": ""}
+        if img is None: return {"prediction": "Error", "sentence": current_sentence}
 
-        # 1. Detect Hand
         hands, img = detector.findHands(img, draw=False)
         
-        prediction_text = "No Hand Detected"
+        raw_char = ""  # What the model sees RIGHT NOW
         
         if hands:
             try:
@@ -419,7 +458,8 @@ async def predict(file: UploadFile = File(...)):
 
                 # Ignore tiny slivers (prevent division by zero)
                 if image.size == 0 or image.shape[0] < 10 or image.shape[1] < 10:
-                    return {"prediction": "Adjust Hand", "audio": ""}
+                    raw_char = "Adjust Hand"
+                    # return {"prediction": "Adjust Hand", "sentence": current_sentence}
 
                 white = np.ones((400, 400, 3), np.uint8) * 255
                 
@@ -452,52 +492,96 @@ async def predict(file: UploadFile = File(...)):
                         white[hGap:end_y, :] = imgResize[:end_y - hGap, :]
 
                     # --- DRAWING (Wrapped in Try/Except) ---
-                    os = ((400 - crop_w) // 2) - 15
-                    os1 = ((400 - crop_h) // 2) - 15
-                    
-                    # ... [PASTE YOUR DRAWING LOOPS HERE] ...
-                    # For safety, I included the loop structure. 
-                    # If you removed it, put it back here.
+                    # 1. Normalize Points to the Crop Box (0.0 to 1.0 range)
+                    # This makes the drawing independent of how far the hand is from the camera
+                    min_x = min([p[0] for p in pts])
+                    min_y = min([p[1] for p in pts])
+                    max_x = max([p[0] for p in pts])
+                    max_y = max([p[1] for p in pts])
+                    w_box = max_x - min_x
+                    h_box = max_y - min_y
+
+                    # 2. Draw RELATIVE to the white canvas size (400x400)
+                    # Instead of adding 'os' (offset), we map the hand directly to the canvas
+                    scale = 350 / max(w_box, h_box) # Leave 25px margin
+                    offset_x = (400 - (w_box * scale)) // 2
+                    offset_y = (400 - (h_box * scale)) // 2
+
+                    # Create a normalized points list
+                    norm_pts = []
+                    for p in pts:
+                        nx = int((p[0] - min_x) * scale + offset_x)
+                        ny = int((p[1] - min_y) * scale + offset_y)
+                        norm_pts.append([nx, ny])
+
+                    # 3. Draw using 'norm_pts' instead of 'pts'
+                    # (Use your existing drawing loops, but replace 'pts[t][0] + os' with 'norm_pts[t][0]')
                     for t in range(0, 4, 1):
-                        cv2.line(white, (pts[t][0] + os, pts[t][1] + os1), (pts[t + 1][0] + os, pts[t + 1][1] + os1), (0, 255, 0), 3)
+                        cv2.line(white, (norm_pts[t][0], norm_pts[t][1]), (norm_pts[t+1][0], norm_pts[t+1][1]), (0, 255, 0), 3)
                     for t in range(5, 8, 1):
-                        cv2.line(white, (pts[t][0] + os, pts[t][1] + os1), (pts[t + 1][0] + os, pts[t + 1][1] + os1), (0, 255, 0), 3)
+                        cv2.line(white, (norm_pts[t][0], norm_pts[t][1]), (norm_pts[t+1][0], norm_pts[t+1][1]), (0, 255, 0), 3)
                     for t in range(9, 12, 1):
-                        cv2.line(white, (pts[t][0] + os, pts[t][1] + os1), (pts[t + 1][0] + os, pts[t + 1][1] + os1), (0, 255, 0), 3)
+                        cv2.line(white, (norm_pts[t][0], norm_pts[t][1]), (norm_pts[t+1][0], norm_pts[t+1][1]), (0, 255, 0), 3)
                     for t in range(13, 16, 1):
-                        cv2.line(white, (pts[t][0] + os, pts[t][1] + os1), (pts[t + 1][0] + os, pts[t + 1][1] + os1), (0, 255, 0), 3)
+                        cv2.line(white, (norm_pts[t][0], norm_pts[t][1]), (norm_pts[t+1][0], norm_pts[t+1][1]), (0, 255, 0), 3)
                     for t in range(17, 20, 1):
-                        cv2.line(white, (pts[t][0] + os, pts[t][1] + os1), (pts[t + 1][0] + os, pts[t + 1][1] + os1), (0, 255, 0), 3)
-                    cv2.line(white, (pts[5][0] + os, pts[5][1] + os1), (pts[9][0] + os, pts[9][1] + os1), (0, 255, 0), 3)
-                    cv2.line(white, (pts[9][0] + os, pts[9][1] + os1), (pts[13][0] + os, pts[13][1] + os1), (0, 255, 0), 3)
-                    cv2.line(white, (pts[13][0] + os, pts[13][1] + os1), (pts[17][0] + os, pts[17][1] + os1), (0, 255, 0), 3)
-                    cv2.line(white, (pts[0][0] + os, pts[0][1] + os1), (pts[5][0] + os, pts[5][1] + os1), (0, 255, 0), 3)
-                    cv2.line(white, (pts[0][0] + os, pts[0][1] + os1), (pts[17][0] + os, pts[17][1] + os1), (0, 255, 0), 3)
+                        cv2.line(white, (norm_pts[t][0], norm_pts[t][1]), (norm_pts[t+1][0], norm_pts[t+1][1]), (0, 255, 0), 3)
+                    cv2.line(white, (norm_pts[5][0], norm_pts[5][1]), (norm_pts[9][0], norm_pts[9][1]), (0, 255, 0), 3)
+                    cv2.line(white, (norm_pts[9][0], norm_pts[9][1]), (norm_pts[13][0], norm_pts[13][1]), (0, 255, 0), 3)
+                    cv2.line(white, (norm_pts[13][0], norm_pts[13][1]), (norm_pts[17][0], norm_pts[17][1]), (0, 255, 0), 3)
+                    cv2.line(white, (norm_pts[0][0], norm_pts[0][1]), (norm_pts[5][0], norm_pts[5][1]), (0, 255, 0), 3)
+                    cv2.line(white, (norm_pts[0][0], norm_pts[0][1]), (norm_pts[17][0], norm_pts[17][1]), (0, 255, 0), 3)
 
                     for i in range(21):
-                        cv2.circle(white, (pts[i][0] + os, pts[i][1] + os1), 2, (0, 0, 255), 1)
+                        cv2.circle(white, (norm_pts[i][0], norm_pts[i][1]), 2, (0, 0, 255), 1)
 
-                    prediction_text = predict_gesture(white, pts)
+                    raw_char = predict_gesture(white, pts)
                 
             except Exception as e:
-                # If ANY math fails (div by zero, array bounds), we just say "Adjust Hand"
-                # Instead of crashing the server with 500
-                print(f"Hand Process Error: {e}") 
-                prediction_text = "Adjust Hand"
+                print(f"Error: {e}")
+                raw_char = ""
 
-        # Audio
-        audio_b64 = ""
-        valid_responses = ["No Hand Detected", "Adjust Hand", "Error", "Processing"]
-        if prediction_text and prediction_text not in valid_responses:
-            try:
-                tts = gTTS(text=str(prediction_text), lang='en')
-                mp3_fp = io.BytesIO()
-                tts.write_to_fp(mp3_fp)
-                mp3_fp.seek(0)
-                audio_b64 = base64.b64encode(mp3_fp.read()).decode('utf-8')
-            except: pass
+        else:
+            raw_char = "No Hand Detected"
 
-        return {"prediction": str(prediction_text), "audio": audio_b64}
+        # ==========================================
+        # 4. NEW: SENTENCE CONSTRUCTION LOGIC
+        # ==========================================
+        
+        # Only process if we have a valid character (not empty, not error)
+        valid_char = raw_char if raw_char and len(raw_char) == 1 else None
+
+        if valid_char:
+            # Check if it matches the last frame
+            if valid_char == last_prediction:
+                stability_counter += 1
+            else:
+                stability_counter = 0 # Reset if it flickers
+                last_prediction = valid_char
+
+            # If stable enough, and different from what we just added
+            if stability_counter >= STABILITY_THRESHOLD:
+                if valid_char != last_added_char:
+                    current_sentence += valid_char
+                    last_added_char = valid_char
+                    stability_counter = 0 # Reset to require re-confirmation
+        else:
+            # If hand is lost/error, reset the "last added" so we can add the same letter again if needed
+            if stability_counter > 0:
+                stability_counter -= 1
+        
+        # ==========================================
+        # 5. RESPONSE
+        # ==========================================
+        
+        # We only generate audio for the WHOLE sentence when requested, 
+        # or maybe just the new letter. For now, let's just return text.
+        
+        return {
+            "prediction": raw_char,       # What is seen right now (e.g., "A")
+            "sentence": current_sentence, # The history (e.g., "HELLOA")
+            "audio": ""                   # Handle audio on frontend for full sentence
+        }
 
     except Exception as e:
         traceback.print_exc()
