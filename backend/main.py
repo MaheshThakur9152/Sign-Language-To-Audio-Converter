@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -21,6 +22,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class TextPayload(BaseModel):
+    text: str
+
+@app.post("/tts")
+async def text_to_speech(payload: TextPayload):
+    try:
+        if not payload.text:
+            return {"audio": ""}
+        tts = gTTS(text=payload.text, lang='en')
+        mp3_fp = io.BytesIO()
+        tts.write_to_fp(mp3_fp)
+        mp3_fp.seek(0)
+        audio_b64 = base64.b64encode(mp3_fp.read()).decode('utf-8')
+        return {"audio": audio_b64}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 # --- LOAD MODEL ---
 model = None
