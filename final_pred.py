@@ -23,7 +23,7 @@ hd2 = HandDetector(maxHands=1)
 import tkinter as tk
 from PIL import Image, ImageTk
 
-offset=29
+offset=15
 
 
 os.environ["THEANO_FLAGS"] = "device=cuda, assert_no_cpu_op=True"

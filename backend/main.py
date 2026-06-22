@@ -51,7 +51,7 @@ except Exception as e:
 # --- INIT DETECTORS ---
 detector = HandDetector(maxHands=1)
 detector2 = HandDetector(maxHands=1)
-offset = 29
+offset = 15
 imgSize = 400
 
 # ==========================================
@@ -60,7 +60,7 @@ imgSize = 400
 current_sentence = ""       # The full sentence
 last_prediction = None      # The character seen in the previous frame
 stability_counter = 0       # How many times we've seen the same char
-STABILITY_THRESHOLD = 5     # Frames required to "lock in" a letter
+STABILITY_THRESHOLD = 10     # Frames required to "lock in" a letter
 last_added_char = None      # The last character we actually added to the sentence
 
 def distance(x, y):
@@ -99,8 +99,8 @@ def predict_gesture(test_image, pts):
         prob = np.array(prediction, dtype='float32')
 
         # --- FIX 1: CONFIDENCE THRESHOLD ---
-        # If the highest probability is less than 80%, return nothing
-        if np.max(prob) < 0.8:
+        # If the highest probability is less than 90%, return nothing
+        if np.max(prob) < 0.9:
             return ""  # Return empty string to indicate uncertainty
 
         # Get top 3 predictions for your logic

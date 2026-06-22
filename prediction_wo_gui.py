@@ -14,7 +14,7 @@ capture = cv2.VideoCapture(0)
 hd = HandDetector(maxHands=1)
 hd2 = HandDetector(maxHands=1)
 
-offset = 29
+offset = 15
 step = 1
 flag = False
 suv = 0
